@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/extract-recipe-photo.ts": {
+      "maxDuration": 30
+    }
+  }
+}

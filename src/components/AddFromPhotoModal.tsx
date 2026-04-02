@@ -21,7 +21,17 @@ export default function AddFromPhotoModal({ onClose, onSaved }: Props) {
     if (!file) return
     const reader = new FileReader()
     reader.onload = () => {
-      setPreview(reader.result as string)
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const MAX = 1200
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+        setPreview(canvas.toDataURL('image/jpeg', 0.85))
+      }
+      img.src = reader.result as string
     }
     reader.readAsDataURL(file)
   }
