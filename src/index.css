@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Bayon&family=Montserrat:wght@400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-gnarly-purple: #2D1468;
+  --color-jucifer-yellow: #FFCC00;
+  --color-hot-magenta: #CC3399;
+  --color-warm-orange: #FF7A00;
+  --color-cream: #FFF8F0;
+  --color-card: #FFFFFF;
+  --color-purple-tint: #F0EAF8;
+  --color-deep-ink: #1A1050;
+  --color-muted: #6B6480;
+  --color-navy: #1A1050;
+
+  --font-display: 'Bayon', sans-serif;
+  --font-body: 'Montserrat', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #FFF8F0;
+  font-family: 'Montserrat', sans-serif;
+  color: #1A1050;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: 'Bayon', sans-serif;
+}
+
+#root {
+  min-height: 100svh;
+}
