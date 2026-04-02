@@ -235,7 +235,7 @@ export default function AddFromUrlModal({ onClose, onSaved }: Props) {
                 </div>
                 <div className="bg-[#FFF8F0] rounded-xl p-3 max-h-64 overflow-y-auto">
                   {recipe.instructions
-                    ? recipe.instructions.split('\n\n').map((step, i, arr) => (
+                    ? recipe.instructions.split('\n\n').map((step, i) => (
                         <div key={i} className="flex gap-3 py-2 border-b border-[#F0EAF8] last:border-0 items-start">
                           <span className="bg-[#2D1468] text-[#FFCC00] font-['Bayon'] text-sm w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1">{i + 1}</span>
                           <textarea
