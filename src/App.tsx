@@ -94,7 +94,10 @@ export default function App() {
             <p className="text-white font-['Bayon'] text-xl m-0">FROM URL</p>
             <p className="text-white font-['Montserrat'] text-sm opacity-80 mt-1 m-0">Paste a website link</p>
           </div>
-          <div className="bg-[#FF7A00] rounded-2xl p-6 text-center cursor-pointer hover:scale-105 transition-transform">
+          <div
+            onClick={() => setView('planner')}
+            className="bg-[#FF7A00] rounded-2xl p-6 text-center cursor-pointer hover:scale-105 transition-transform"
+          >
             <div className="text-4xl mb-3">📅</div>
             <p className="text-white font-['Bayon'] text-xl m-0">MEAL PLAN</p>
             <p className="text-white font-['Montserrat'] text-sm opacity-80 mt-1 m-0">Plan your week</p>
