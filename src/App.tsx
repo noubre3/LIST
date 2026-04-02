@@ -7,10 +7,20 @@ export default function App() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [search, setSearch] = useState('')
   const [showUrlModal, setShowUrlModal] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null)
+  const [deleteConfirmName, setDeleteConfirmName] = useState('')
 
   useEffect(() => {
     loadRecipes()
   }, [])
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    await supabase.from('recipes').delete().eq('id', deleteTarget.id)
+    setDeleteTarget(null)
+    setDeleteConfirmName('')
+    loadRecipes()
+  }
 
   async function loadRecipes() {
     const { data } = await supabase.from('recipes').select('*').order('created_at', { ascending: false })
@@ -95,12 +105,19 @@ export default function App() {
         {filtered.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             {filtered.map((recipe) => (
-              <div key={recipe.id} className="bg-white rounded-2xl shadow-sm border border-[#F0EAF8] overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
+              <div key={recipe.id} className="bg-white rounded-2xl shadow-sm border border-[#F0EAF8] overflow-hidden hover:shadow-md transition-shadow relative group">
                 {recipe.photo_url ? (
                   <img src={recipe.photo_url} alt={recipe.title} className="w-full h-40 object-cover" />
                 ) : (
                   <div className="w-full h-40 bg-[#F0EAF8] flex items-center justify-center text-4xl">🍽️</div>
                 )}
+                <button
+                  onClick={() => { setDeleteTarget(recipe); setDeleteConfirmName('') }}
+                  className="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full border-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-sm font-bold"
+                  title="Delete recipe"
+                >
+                  ✕
+                </button>
                 <div className="p-4">
                   <h4 className="text-[#2D1468] font-['Bayon'] text-xl m-0 mb-2 leading-tight">{recipe.title}</h4>
                   <div className="flex flex-wrap gap-1 mb-2">
@@ -147,6 +164,46 @@ export default function App() {
           onClose={() => setShowUrlModal(false)}
           onSaved={loadRecipes}
         />
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="bg-red-500 px-6 py-4">
+              <h2 className="text-white font-['Bayon'] text-2xl m-0">DELETE RECIPE</h2>
+            </div>
+            <div className="p-6">
+              <p className="text-[#1A1050] font-['Montserrat'] mb-2">
+                You are about to delete <strong>"{deleteTarget.title}"</strong>. This cannot be undone.
+              </p>
+              <p className="text-[#6B6480] font-['Montserrat'] text-sm mb-4">
+                Type the recipe name to confirm:
+              </p>
+              <input
+                value={deleteConfirmName}
+                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                placeholder={deleteTarget.title}
+                className="w-full border-2 border-[#F0EAF8] rounded-xl px-4 py-2 font-['Montserrat'] outline-none focus:border-red-400 mb-4"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setDeleteTarget(null); setDeleteConfirmName('') }}
+                  className="flex-1 border-2 border-[#2D1468] text-[#2D1468] font-['Montserrat'] font-bold uppercase tracking-widest py-3 rounded-full bg-transparent cursor-pointer hover:bg-[#F0EAF8] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteConfirmName.trim().toLowerCase() !== deleteTarget.title.trim().toLowerCase()}
+                  className="flex-1 bg-red-500 text-white font-['Montserrat'] font-bold uppercase tracking-widest py-3 rounded-full border-0 cursor-pointer hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

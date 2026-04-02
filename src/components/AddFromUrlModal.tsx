@@ -170,12 +170,30 @@ export default function AddFromUrlModal({ onClose, onSaved }: Props) {
                 <label className="text-[#2D1468] font-['Montserrat'] font-bold text-xs uppercase tracking-widest block mb-2">
                   Ingredients ({recipe.ingredients.length})
                 </label>
-                <div className="bg-[#FFF8F0] rounded-xl p-3 max-h-40 overflow-y-auto">
+                <div className="bg-[#FFF8F0] rounded-xl p-3 max-h-48 overflow-y-auto">
                   {recipe.ingredients.map((ing, i) => (
-                    <p key={i} className="text-[#1A1050] font-['Montserrat'] text-sm py-1 border-b border-[#F0EAF8] last:border-0 m-0">
-                      {ing.name}
-                    </p>
+                    <div key={i} className="flex gap-2 py-1 border-b border-[#F0EAF8] last:border-0">
+                      <span className="text-[#CC3399] font-['Montserrat'] font-bold text-sm w-12 shrink-0">{ing.amount}</span>
+                      <span className="text-[#FF7A00] font-['Montserrat'] text-sm w-16 shrink-0">{ing.unit}</span>
+                      <span className="text-[#1A1050] font-['Montserrat'] text-sm">{ing.name}</span>
+                    </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="mb-4">
+                <label className="text-[#2D1468] font-['Montserrat'] font-bold text-xs uppercase tracking-widest block mb-2">Instructions</label>
+                <div className="bg-[#FFF8F0] rounded-xl p-3 max-h-48 overflow-y-auto">
+                  {recipe.instructions
+                    ? recipe.instructions.split('\n\n').map((step, i) => (
+                        <div key={i} className="flex gap-3 py-2 border-b border-[#F0EAF8] last:border-0">
+                          <span className="bg-[#2D1468] text-[#FFCC00] font-['Bayon'] text-sm w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                          <p className="text-[#1A1050] font-['Montserrat'] text-sm m-0">{step}</p>
+                        </div>
+                      ))
+                    : <p className="text-[#6B6480] font-['Montserrat'] text-sm m-0">No instructions extracted.</p>
+                  }
                 </div>
               </div>
 
