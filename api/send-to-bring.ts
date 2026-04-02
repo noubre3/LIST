@@ -23,16 +23,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const bring = new Bring({ mail: email, password })
-    await bring.login()
+    const loginResult = await bring.login()
+    console.log('Login result:', JSON.stringify(loginResult))
 
     const listsResponse = await bring.loadLists()
+    console.log('Lists response:', JSON.stringify(listsResponse))
+
     const lists = listsResponse.lists
     const list = lists.find((l: { name: string }) =>
       l.name.toLowerCase() === listName.toLowerCase()
     )
 
     if (!list) {
-      return res.status(404).json({ error: `List "${listName}" not found in your Bring! account` })
+      const available = lists.map((l: { name: string }) => l.name).join(', ')
+      return res.status(404).json({ error: `List "${listName}" not found. Available lists: ${available}` })
     }
 
     for (const ing of ingredients) {
@@ -44,7 +48,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.json({ success: true, count: ingredients.length })
   } catch (err) {
-    console.error(err)
-    return res.status(500).json({ error: 'Failed to send to Bring!. Check your credentials.' })
+    console.error('Bring error:', err)
+    const message = err instanceof Error ? err.message : String(err)
+    return res.status(500).json({ error: `Bring! error: ${message}` })
   }
 }
