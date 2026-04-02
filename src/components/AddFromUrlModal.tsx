@@ -167,15 +167,56 @@ export default function AddFromUrlModal({ onClose, onSaved }: Props) {
 
               {/* Ingredients */}
               <div className="mb-4">
-                <label className="text-[#2D1468] font-['Montserrat'] font-bold text-xs uppercase tracking-widest block mb-2">
-                  Ingredients ({recipe.ingredients.length})
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[#2D1468] font-['Montserrat'] font-bold text-xs uppercase tracking-widest">
+                    Ingredients ({recipe.ingredients.length})
+                  </label>
+                  <button
+                    onClick={() => setRecipe({ ...recipe, ingredients: [...recipe.ingredients, { amount: '', unit: '', name: '' }] })}
+                    className="text-[#CC3399] font-['Montserrat'] font-bold text-xs bg-transparent border-0 cursor-pointer hover:text-[#2D1468]"
+                  >
+                    + Add
+                  </button>
+                </div>
                 <div className="bg-[#FFF8F0] rounded-xl p-3 max-h-48 overflow-y-auto">
                   {recipe.ingredients.map((ing, i) => (
-                    <div key={i} className="flex gap-2 py-1 border-b border-[#F0EAF8] last:border-0">
-                      <span className="text-[#CC3399] font-['Montserrat'] font-bold text-sm w-12 shrink-0">{ing.amount}</span>
-                      <span className="text-[#FF7A00] font-['Montserrat'] text-sm w-16 shrink-0">{ing.unit}</span>
-                      <span className="text-[#1A1050] font-['Montserrat'] text-sm">{ing.name}</span>
+                    <div key={i} className="flex gap-2 py-1 border-b border-[#F0EAF8] last:border-0 items-center">
+                      <input
+                        value={ing.amount}
+                        onChange={(e) => {
+                          const updated = [...recipe.ingredients]
+                          updated[i] = { ...updated[i], amount: e.target.value }
+                          setRecipe({ ...recipe, ingredients: updated })
+                        }}
+                        placeholder="qty"
+                        className="w-12 bg-white border border-[#F0EAF8] rounded-lg px-1 py-0.5 font-['Montserrat'] text-[#CC3399] font-bold text-sm outline-none focus:border-[#CC3399] shrink-0 text-center"
+                      />
+                      <input
+                        value={ing.unit}
+                        onChange={(e) => {
+                          const updated = [...recipe.ingredients]
+                          updated[i] = { ...updated[i], unit: e.target.value }
+                          setRecipe({ ...recipe, ingredients: updated })
+                        }}
+                        placeholder="unit"
+                        className="w-16 bg-white border border-[#F0EAF8] rounded-lg px-1 py-0.5 font-['Montserrat'] text-[#FF7A00] text-sm outline-none focus:border-[#FF7A00] shrink-0"
+                      />
+                      <input
+                        value={ing.name}
+                        onChange={(e) => {
+                          const updated = [...recipe.ingredients]
+                          updated[i] = { ...updated[i], name: e.target.value }
+                          setRecipe({ ...recipe, ingredients: updated })
+                        }}
+                        placeholder="ingredient"
+                        className="flex-1 bg-white border border-[#F0EAF8] rounded-lg px-2 py-0.5 font-['Montserrat'] text-[#1A1050] text-sm outline-none focus:border-[#2D1468]"
+                      />
+                      <button
+                        onClick={() => setRecipe({ ...recipe, ingredients: recipe.ingredients.filter((_, j) => j !== i) })}
+                        className="text-red-400 hover:text-red-600 bg-transparent border-0 cursor-pointer text-xs shrink-0"
+                      >
+                        ✕
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -183,13 +224,39 @@ export default function AddFromUrlModal({ onClose, onSaved }: Props) {
 
               {/* Instructions */}
               <div className="mb-4">
-                <label className="text-[#2D1468] font-['Montserrat'] font-bold text-xs uppercase tracking-widest block mb-2">Instructions</label>
-                <div className="bg-[#FFF8F0] rounded-xl p-3 max-h-48 overflow-y-auto">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[#2D1468] font-['Montserrat'] font-bold text-xs uppercase tracking-widest">Instructions</label>
+                  <button
+                    onClick={() => setRecipe({ ...recipe, instructions: recipe.instructions ? recipe.instructions + '\n\n' : '' })}
+                    className="text-[#CC3399] font-['Montserrat'] font-bold text-xs bg-transparent border-0 cursor-pointer hover:text-[#2D1468]"
+                  >
+                    + Add Step
+                  </button>
+                </div>
+                <div className="bg-[#FFF8F0] rounded-xl p-3 max-h-64 overflow-y-auto">
                   {recipe.instructions
-                    ? recipe.instructions.split('\n\n').map((step, i) => (
-                        <div key={i} className="flex gap-3 py-2 border-b border-[#F0EAF8] last:border-0">
-                          <span className="bg-[#2D1468] text-[#FFCC00] font-['Bayon'] text-sm w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                          <p className="text-[#1A1050] font-['Montserrat'] text-sm m-0">{step}</p>
+                    ? recipe.instructions.split('\n\n').map((step, i, arr) => (
+                        <div key={i} className="flex gap-3 py-2 border-b border-[#F0EAF8] last:border-0 items-start">
+                          <span className="bg-[#2D1468] text-[#FFCC00] font-['Bayon'] text-sm w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1">{i + 1}</span>
+                          <textarea
+                            value={step}
+                            onChange={(e) => {
+                              const steps = recipe.instructions.split('\n\n')
+                              steps[i] = e.target.value
+                              setRecipe({ ...recipe, instructions: steps.join('\n\n') })
+                            }}
+                            rows={2}
+                            className="flex-1 bg-white border border-[#F0EAF8] rounded-lg px-2 py-1 font-['Montserrat'] text-[#1A1050] text-sm outline-none focus:border-[#2D1468] resize-none"
+                          />
+                          <button
+                            onClick={() => {
+                              const steps = recipe.instructions.split('\n\n').filter((_, j) => j !== i)
+                              setRecipe({ ...recipe, instructions: steps.join('\n\n') })
+                            }}
+                            className="text-red-400 hover:text-red-600 bg-transparent border-0 cursor-pointer text-xs shrink-0 mt-1"
+                          >
+                            ✕
+                          </button>
                         </div>
                       ))
                     : <p className="text-[#6B6480] font-['Montserrat'] text-sm m-0">No instructions extracted.</p>
