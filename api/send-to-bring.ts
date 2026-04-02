@@ -15,7 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const email = process.env.BRING_EMAIL
   const password = process.env.BRING_PASSWORD
-  const listName = process.env.BRING_LIST_NAME || 'EATERS'
+  const listName = (process.env.BRING_LIST_NAME || 'EATERS').trim()
 
   if (!email || !password) {
     return res.status(500).json({ error: 'Bring! credentials not configured' })
