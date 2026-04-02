@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { supabase, type MealPlan, type MealType, type Recipe } from '../lib/supabase'
+import { supabase, type Ingredient, type MealPlan, type MealType, type Recipe } from '../lib/supabase'
+
+type BringIngredient = Ingredient & { recipeTitle: string; servingMultiplier: number; removed?: boolean }
 
 type Props = {
   recipes: Recipe[]
@@ -31,6 +33,10 @@ export default function MealPlanner({ recipes }: Props) {
   const [picker, setPicker] = useState<{ date: string; mealType: MealType } | null>(null)
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [search, setSearch] = useState('')
+  const [showBringReview, setShowBringReview] = useState(false)
+  const [bringIngredients, setBringIngredients] = useState<BringIngredient[]>([])
+  const [sendingToBring, setSendingToBring] = useState(false)
+  const [bringSuccess, setBringSuccess] = useState(false)
 
   const days = getWeekDates(weekOffset)
 
@@ -72,6 +78,55 @@ export default function MealPlanner({ recipes }: Props) {
   async function removeMeal(id: string) {
     await supabase.from('meal_plans').delete().eq('id', id)
     loadMealPlans()
+  }
+
+  function openBringReview() {
+    const selectedMeals = mealPlans.filter((m) => selectedDays.includes(m.planned_date))
+    const collected: BringIngredient[] = []
+    for (const meal of selectedMeals) {
+      if (!meal.recipe) continue
+      const multiplier = meal.servings / (meal.recipe.servings || 1)
+      for (const ing of meal.recipe.ingredients) {
+        const existing = collected.find((i) => i.name.toLowerCase() === ing.name.toLowerCase())
+        if (existing) {
+          const newAmount = (parseFloat(existing.amount || '0') + parseFloat(ing.amount || '0') * multiplier)
+          existing.amount = newAmount % 1 === 0 ? String(newAmount) : newAmount.toFixed(1)
+        } else {
+          const scaledAmount = ing.amount ? parseFloat(ing.amount) * multiplier : 0
+          collected.push({
+            ...ing,
+            amount: scaledAmount ? (scaledAmount % 1 === 0 ? String(scaledAmount) : scaledAmount.toFixed(1)) : ing.amount,
+            recipeTitle: meal.recipe.title,
+            servingMultiplier: multiplier,
+          })
+        }
+      }
+    }
+    setBringIngredients(collected)
+    setShowBringReview(true)
+  }
+
+  async function sendToBring() {
+    setSendingToBring(true)
+    try {
+      const res = await fetch('/api/send-to-bring', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ingredients: bringIngredients.filter((i) => !i.removed) }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setBringSuccess(true)
+      setTimeout(() => {
+        setShowBringReview(false)
+        setBringSuccess(false)
+        setSelectedDays([])
+      }, 2500)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to send to Bring!')
+    } finally {
+      setSendingToBring(false)
+    }
   }
 
   function getMeal(date: string, mealType: MealType): MealPlan | undefined {
@@ -220,10 +275,82 @@ export default function MealPlanner({ recipes }: Props) {
               Clear
             </button>
             <button
+              onClick={openBringReview}
               className="bg-[#FFCC00] text-[#2D1468] font-['Montserrat'] font-bold text-sm px-5 py-2 rounded-full border-0 cursor-pointer hover:bg-[#FF7A00] hover:text-white transition-colors"
             >
               Send to Bring! →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bring! review modal */}
+      {showBringReview && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="bg-[#2D1468] px-6 py-4 flex items-center justify-between">
+              <h3 className="text-[#FFCC00] font-['Bayon'] text-2xl m-0">SEND TO BRING!</h3>
+              <button onClick={() => setShowBringReview(false)} className="text-white hover:text-[#FFCC00] text-2xl bg-transparent border-0 cursor-pointer">✕</button>
+            </div>
+
+            {bringSuccess ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                <div className="text-6xl mb-4">✅</div>
+                <p className="text-[#2D1468] font-['Bayon'] text-3xl m-0">SENT TO EATERS!</p>
+                <p className="text-[#6B6480] font-['Montserrat'] text-sm mt-2">Check your Bring! app now.</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-[#6B6480] font-['Montserrat'] text-sm px-6 pt-4 pb-2">
+                  Review the ingredients below. Tap ✕ to remove anything you already have at home.
+                </p>
+                <div className="flex-1 overflow-y-auto px-6 pb-4">
+                  {bringIngredients.map((ing, i) => (
+                    <div key={i} className={`flex items-center gap-3 py-2 border-b border-[#F0EAF8] last:border-0 ${ing.removed ? 'opacity-30' : ''}`}>
+                      <div className="flex-1">
+                        <p className="text-[#1A1050] font-['Montserrat'] font-bold text-sm m-0">{ing.name}</p>
+                        <p className="text-[#6B6480] font-['Montserrat'] text-xs m-0">
+                          {[ing.amount, ing.unit].filter(Boolean).join(' ')}
+                          {ing.recipeTitle ? ` · ${ing.recipeTitle}` : ''}
+                        </p>
+                      </div>
+                      <input
+                        type="text"
+                        value={ing.amount}
+                        onChange={(e) => {
+                          const updated = [...bringIngredients]
+                          updated[i] = { ...updated[i], amount: e.target.value }
+                          setBringIngredients(updated)
+                        }}
+                        className="w-14 border border-[#F0EAF8] rounded-lg px-2 py-1 font-['Montserrat'] text-[#CC3399] font-bold text-sm outline-none focus:border-[#CC3399] text-center"
+                      />
+                      <button
+                        onClick={() => {
+                          const updated = [...bringIngredients]
+                          updated[i] = { ...updated[i], removed: !updated[i].removed }
+                          setBringIngredients(updated)
+                        }}
+                        className={`w-7 h-7 rounded-full border-0 cursor-pointer text-xs font-bold transition-colors ${ing.removed ? 'bg-[#F0EAF8] text-[#6B6480]' : 'bg-red-100 text-red-500 hover:bg-red-200'}`}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-6 pb-6 pt-2 border-t border-[#F0EAF8]">
+                  <p className="text-[#6B6480] font-['Montserrat'] text-xs mb-3 m-0">
+                    {bringIngredients.filter((i) => !i.removed).length} of {bringIngredients.length} ingredients will be sent
+                  </p>
+                  <button
+                    onClick={sendToBring}
+                    disabled={sendingToBring || bringIngredients.filter((i) => !i.removed).length === 0}
+                    className="w-full bg-[#2D1468] text-[#FFCC00] font-['Montserrat'] font-bold uppercase tracking-widest py-3 rounded-full border-0 cursor-pointer hover:bg-[#CC3399] hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {sendingToBring ? 'Sending...' : 'Send to Bring! →'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
