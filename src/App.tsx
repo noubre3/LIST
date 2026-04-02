@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import './index.css'
 import { supabase, type Recipe } from './lib/supabase'
 import AddFromUrlModal from './components/AddFromUrlModal'
+import AddFromPhotoModal from './components/AddFromPhotoModal'
 
 export default function App() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [search, setSearch] = useState('')
   const [showUrlModal, setShowUrlModal] = useState(false)
+  const [showPhotoModal, setShowPhotoModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null)
   const [deleteConfirmName, setDeleteConfirmName] = useState('')
 
@@ -65,7 +67,10 @@ export default function App() {
 
         {/* Quick actions */}
         <div className="grid grid-cols-3 gap-4 mb-10">
-          <div className="bg-[#2D1468] rounded-2xl p-6 text-center cursor-pointer hover:scale-105 transition-transform">
+          <div
+            onClick={() => setShowPhotoModal(true)}
+            className="bg-[#2D1468] rounded-2xl p-6 text-center cursor-pointer hover:scale-105 transition-transform"
+          >
             <div className="text-4xl mb-3">📷</div>
             <p className="text-[#FFCC00] font-['Bayon'] text-xl m-0">FROM PHOTO</p>
             <p className="text-white font-['Montserrat'] text-sm opacity-70 mt-1 m-0">Snap a paper recipe</p>
@@ -159,6 +164,12 @@ export default function App() {
       </div>
 
       {/* Modals */}
+      {showPhotoModal && (
+        <AddFromPhotoModal
+          onClose={() => setShowPhotoModal(false)}
+          onSaved={loadRecipes}
+        />
+      )}
       {showUrlModal && (
         <AddFromUrlModal
           onClose={() => setShowUrlModal(false)}
