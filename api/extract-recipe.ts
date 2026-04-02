@@ -51,14 +51,70 @@ function findRecipe(data: unknown): Record<string, unknown> | null {
   return null
 }
 
+const UNITS = [
+  'cups','cup','c',
+  'tablespoons','tablespoon','tbsp','tbs',
+  'teaspoons','teaspoon','tsp',
+  'pounds','pound','lbs','lb',
+  'ounces','ounce','oz',
+  'grams','gram','g',
+  'kilograms','kilogram','kg',
+  'milliliters','milliliter','ml',
+  'liters','liter','l',
+  'cloves','clove',
+  'slices','slice',
+  'cans','can',
+  'packages','package','pkg',
+  'pieces','piece',
+  'bunches','bunch',
+  'heads','head',
+  'stalks','stalk',
+  'sprigs','sprig',
+  'pinch','dash','handful','drop',
+  'inch','inches',
+]
+
+const UNIT_PATTERN = new RegExp(
+  `^(${UNITS.join('|')})\\b`,
+  'i'
+)
+
+function parseIngredient(raw: string): { name: string; amount: string; unit: string } {
+  // Strip parenthetical notes and anything after double parentheses
+  const cleaned = raw.replace(/\s*\(.*?\)/g, '').replace(/\s*,.*$/, '').trim()
+
+  // Match leading number (including fractions like 1/2 or 1 1/2)
+  const amountMatch = cleaned.match(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+\.?\d*)/)
+  const amount = amountMatch ? amountMatch[1].trim() : ''
+  const afterAmount = cleaned.slice(amount.length).trim()
+
+  // Match unit
+  const unitMatch = afterAmount.match(UNIT_PATTERN)
+  const unit = unitMatch ? unitMatch[1].toLowerCase() : ''
+  const afterUnit = afterAmount.slice(unit.length).trim()
+
+  // What's left is the name — clean up leading "of"
+  const name = afterUnit.replace(/^of\s+/i, '').trim() || raw.trim()
+
+  return { name, amount, unit }
+}
+
 function normalizeRecipe(r: Record<string, unknown>) {
-  const ingredients = (r.recipeIngredient as string[] || []).map((raw: string) => {
-    return { name: raw, amount: '', unit: '' }
-  })
+  const ingredients = (r.recipeIngredient as string[] || []).map(parseIngredient)
 
   const instructions = Array.isArray(r.recipeInstructions)
     ? (r.recipeInstructions as Record<string, unknown>[])
-        .map((s) => (typeof s === 'string' ? s : (s.text as string) || ''))
+        .flatMap((s) => {
+          if (typeof s === 'string') return [s]
+          // HowToSection contains itemListElement array
+          if (s['@type'] === 'HowToSection' && Array.isArray(s.itemListElement)) {
+            return (s.itemListElement as Record<string, unknown>[]).map(
+              (step) => (typeof step === 'string' ? step : (step.text as string) || '')
+            )
+          }
+          return [(s.text as string) || '']
+        })
+        .filter(Boolean)
         .join('\n\n')
     : String(r.recipeInstructions || '')
 
