@@ -3,12 +3,14 @@ import './index.css'
 import { supabase, type Recipe } from './lib/supabase'
 import AddFromUrlModal from './components/AddFromUrlModal'
 import AddFromPhotoModal from './components/AddFromPhotoModal'
+import MealPlanner from './components/MealPlanner'
 
 export default function App() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [search, setSearch] = useState('')
   const [showUrlModal, setShowUrlModal] = useState(false)
   const [showPhotoModal, setShowPhotoModal] = useState(false)
+  const [view, setView] = useState<'recipes' | 'planner'>('recipes')
   const [deleteTarget, setDeleteTarget] = useState<Recipe | null>(null)
   const [deleteConfirmName, setDeleteConfirmName] = useState('')
 
@@ -44,15 +46,24 @@ export default function App() {
       <nav className="bg-[#2D1468] px-6 py-4 flex items-center justify-between">
         <h1 className="text-[#FFCC00] text-4xl font-['Bayon'] tracking-wide m-0">LIST</h1>
         <div className="flex gap-6 items-center">
-          <button className="text-white font-['Montserrat'] font-semibold text-sm uppercase tracking-widest hover:text-[#FFCC00] transition-colors bg-transparent border-0 cursor-pointer">
+          <button
+            onClick={() => setView('recipes')}
+            className={`font-['Montserrat'] font-semibold text-sm uppercase tracking-widest bg-transparent border-0 cursor-pointer transition-colors ${view === 'recipes' ? 'text-[#FFCC00]' : 'text-white hover:text-[#FFCC00]'}`}
+          >
             Recipes
           </button>
-          <button className="text-white font-['Montserrat'] font-semibold text-sm uppercase tracking-widest hover:text-[#FFCC00] transition-colors bg-transparent border-0 cursor-pointer">
+          <button
+            onClick={() => setView('planner')}
+            className={`font-['Montserrat'] font-semibold text-sm uppercase tracking-widest bg-transparent border-0 cursor-pointer transition-colors ${view === 'planner' ? 'text-[#FFCC00]' : 'text-white hover:text-[#FFCC00]'}`}
+          >
             Meal Plan
           </button>
         </div>
       </nav>
 
+      {view === 'planner' && <MealPlanner recipes={recipes} />}
+
+      {view === 'recipes' && <>
       {/* Hero */}
       <div className="bg-[#2D1468] px-6 pb-12 pt-8 text-center">
         <h2 className="text-[#FFCC00] text-6xl font-['Bayon'] m-0">YOUR RECIPE BOOK.</h2>
@@ -162,6 +173,7 @@ export default function App() {
           </div>
         )}
       </div>
+      </>}
 
       {/* Modals */}
       {showPhotoModal && (

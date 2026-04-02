@@ -27,10 +27,13 @@ export type Recipe = {
   created_at: string
 }
 
+export type MealType = 'breakfast' | 'lunch' | 'dinner'
+
 export type MealPlan = {
   id: string
   recipe_id: string
   planned_date: string
+  meal_type: MealType
   servings: number
   created_at: string
   recipe?: Recipe
